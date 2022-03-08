@@ -7,33 +7,59 @@
 
 #include "comKey.h"
 
+comkey_t key0, key1;
+
 __attribute__((weak)) void ComKey_SyncValue(comkey_t *key) {
     //if your key was pressed,"key->val" should be 1.
-    key->val = !HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0);
+    if (key == &key0)
+        key->val = !HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0);
+    if (key == &key1) {
+        key->val = !HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_1);
+    }
 
     //IMPORTANT！！！DO NOT MODIFIED!!!
     key->preVal = key->val;
 }
 
 __attribute__((weak)) void ComKey_LongHoldCallback(comkey_t *key, uint32_t holdTime) {
+    if (key == &key0)
+        printf("key0: ");
+    if (key == &key1) {
+        printf("key1: ");
+    }
     printf("hold %ldms\n", holdTime);
 }
 
 __attribute__((weak)) void ComKey_MultipleClickCallback(comkey_t *key, uint8_t times) {
+    if (key == &key0)
+        printf("key0: ");
+    if (key == &key1) {
+        printf("key1: ");
+    }
     printf("click: %d\n", times);
 }
 
 __attribute__((weak)) void ComKey_KeyReleaseCallback(comkey_t *key) {
+    if (key == &key0)
+        printf("key0: ");
+    if (key == &key1) {
+        printf("key1: ");
+    }
     printf("keyRelease!\n");
 }
 
 __attribute__((weak)) void ComKey_KeyPressCallback(comkey_t *key) {
+    if (key == &key0)
+        printf("key0: ");
+    if (key == &key1) {
+        printf("key1: ");
+    }
     printf("keyPress!\n");
 }
 
 void ComKey_Init(comkey_t *key, int pollingPeriod) {
     ITPeriod = pollingPeriod;
-    key->state = KeyState_Release;
+    key->state = Release;
 }
 
 void ComKey_Handler(comkey_t *key) {
@@ -42,7 +68,7 @@ void ComKey_Handler(comkey_t *key) {
 
     //按下计时
     if (!key->val) {
-        if (key->state == KeyState_LongHold) {
+        if (key->state == LongHold) {
             key->holdTime = key->preTimer;
         }
         key->preTimer = 0;
@@ -51,7 +77,7 @@ void ComKey_Handler(comkey_t *key) {
         key->preTimer += ITPeriod;
     }
     //间隔计时
-    if (key->state == KeyState_MultipleClick) {
+    if (key->state == MultiClick) {
         key->intervalTimer += ITPeriod;
     } else {
         key->intervalTimer = 0;
@@ -59,47 +85,47 @@ void ComKey_Handler(comkey_t *key) {
 
     //事件生成
     switch (key->state) {
-        case KeyState_Release:
+        case Release:
             key->clickCnt = 0;
 
             if (key->val) {
-                key->state = KeyState_PrePress;
+                key->state = PrePress;
             }
             break;
-        case KeyState_PrePress:
+        case PrePress:
 
             if (!key->val) {
-                key->state = KeyState_Release;
+                key->state = Release;
             } else if (key->preTimer > COMKEY_ClickThreshold) {
-                key->state = KeyState_PreLong;
+                key->state = Prelong;
                 ComKey_KeyPressCallback(key);
             }
             break;
-        case KeyState_PreLong:
+        case Prelong:
 
             if (!key->val) {
-                key->state = KeyState_MultipleClick;
+                key->state = MultiClick;
                 key->clickCnt++;
             } else if (key->preTimer > COMKEY_HoldThreshold) {
-                key->state = KeyState_LongHold;
+                key->state = LongHold;
             }
             break;
-        case KeyState_LongHold:
+        case LongHold:
 
             if (!key->val) {
-                key->state = KeyState_Release;
+                key->state = Release;
                 ComKey_LongHoldCallback(key, key->holdTime);
                 ComKey_KeyReleaseCallback(key);
             }
             break;
-        case KeyState_MultipleClick:
+        case MultiClick:
 
             if (key->intervalTimer > COMKEY_IntervalVal) {
-                key->state = KeyState_Release;
+                key->state = Release;
                 ComKey_MultipleClickCallback(key, key->clickCnt);
                 ComKey_KeyReleaseCallback(key);
             } else if (key->preTimer > COMKEY_ClickThreshold) {
-                key->state = KeyState_PreLong;
+                key->state = Prelong;
             }
             break;
 
