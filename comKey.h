@@ -21,7 +21,7 @@
 #define COMKEY_HoldThreshold            800
 #define COMKEY_IntervalVal              200
 
-typedef struct {
+typedef struct comKeyTypedef {
     const uint8_t pressLevel: 1;
     uint8_t preVal: 1;
     uint8_t val: 1;
@@ -39,16 +39,16 @@ typedef struct {
 
     uint32_t preTimer;// 按下计时
     uint32_t intervalTimer;// 放开计时
-} comkey_t;
 
-static uint8_t ITPeriod = 1;
+    struct comKeyTypedef *next;
+} comkey_t, *pcomkey_t;
 
 //TODO:Rewrite the "ComKey_SyncValue" function by user.
 void ComKey_SyncValue(comkey_t *key);
 
 void ComKey_Init(comkey_t *key, int pollingPeriod);
 
-void ComKey_Handler(comkey_t *key);
+void ComKey_Handler();
 
 void ComKey_LongHoldCallback(comkey_t *key, uint32_t holdTime);
 

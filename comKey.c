@@ -57,83 +57,98 @@ __attribute__((weak)) void ComKey_KeyPressCallback(comkey_t *key) {
     printf("keyPress!\n");
 }
 
+static pcomkey_t head = NULL, tail = NULL;
+static uint8_t ITPeriod = 1;
+
 void ComKey_Init(comkey_t *key, int pollingPeriod) {
     ITPeriod = pollingPeriod;
     key->state = Release;
+    key->next = NULL;
+
+    if (head == NULL) {
+        head = key;
+        tail = key;
+    } else {
+        tail->next = key;
+        tail = tail->next;
+    }
 }
 
-void ComKey_Handler(comkey_t *key) {
-    //键值同步
-    ComKey_SyncValue(key);
+void ComKey_Handler() {
 
-    //按下计时
-    if (!key->val) {
-        if (key->state == LongHold) {
-            key->holdTime = key->preTimer;
+    for (pcomkey_t key = head; key != NULL; key = key->next) {
+        //键值同步
+        ComKey_SyncValue(key);
+
+        //按下计时
+        if (!key->val) {
+            if (key->state == LongHold) {
+                key->holdTime = key->preTimer;
+            }
+            key->preTimer = 0;
         }
-        key->preTimer = 0;
-    }
-    if (key->preVal & key->val) {
-        key->preTimer += ITPeriod;
-    }
-    //间隔计时
-    if (key->state == MultiClick) {
-        key->intervalTimer += ITPeriod;
-    } else {
-        key->intervalTimer = 0;
-    }
+        if (key->preVal & key->val) {
+            key->preTimer += ITPeriod;
+        }
+        //间隔计时
+        if (key->state == MultiClick) {
+            key->intervalTimer += ITPeriod;
+        } else {
+            key->intervalTimer = 0;
+        }
 
-    //事件生成
-    switch (key->state) {
-        case Release:
-            key->clickCnt = 0;
+        //事件生成
+        switch (key->state) {
+            case Release:
+                key->clickCnt = 0;
 
-            if (key->val) {
-                key->state = PrePress;
-            }
-            break;
-        case PrePress:
+                if (key->val) {
+                    key->state = PrePress;
+                }
+                break;
+            case PrePress:
 
-            if (!key->val) {
-                key->state = Release;
-            } else if (key->preTimer > COMKEY_ClickThreshold) {
-                key->state = Prelong;
-                ComKey_KeyPressCallback(key);
-            }
-            break;
-        case Prelong:
+                if (!key->val) {
+                    key->state = Release;
+                } else if (key->preTimer > COMKEY_ClickThreshold) {
+                    key->state = Prelong;
+                    ComKey_KeyPressCallback(key);
+                }
+                break;
+            case Prelong:
 
-            if (!key->val) {
-                key->state = MultiClick;
-                key->clickCnt++;
-            } else if (key->preTimer > COMKEY_HoldThreshold) {
-                key->state = LongHold;
-            }
-            break;
-        case LongHold:
+                if (!key->val) {
+                    key->state = MultiClick;
+                    key->clickCnt++;
+                } else if (key->preTimer > COMKEY_HoldThreshold) {
+                    key->state = LongHold;
+                }
+                break;
+            case LongHold:
 
-            if (!key->val) {
-                key->state = Release;
-                ComKey_LongHoldCallback(key, key->holdTime);
-                ComKey_KeyReleaseCallback(key);
-            }
-            break;
-        case MultiClick:
+                if (!key->val) {
+                    key->state = Release;
+                    ComKey_LongHoldCallback(key, key->holdTime);
+                    ComKey_KeyReleaseCallback(key);
+                }
+                break;
+            case MultiClick:
 
-            if (key->intervalTimer > COMKEY_IntervalVal) {
-                key->state = Release;
-                ComKey_MultipleClickCallback(key, key->clickCnt);
-                ComKey_KeyReleaseCallback(key);
-            } else if (key->preTimer > COMKEY_ClickThreshold) {
-                key->state = Prelong;
-            }
-            break;
+                if (key->intervalTimer > COMKEY_IntervalVal) {
+                    key->state = Release;
+                    ComKey_MultipleClickCallback(key, key->clickCnt);
+                    ComKey_KeyReleaseCallback(key);
+                } else if (key->preTimer > COMKEY_ClickThreshold) {
+                    key->state = Prelong;
+                }
+                break;
 
-        default:
+            default:
 #ifdef USE_HAL_DRIVER
-            Error_Handler();
+                Error_Handler();
 #endif//USE_HAL_DRIVER
-            break;
+                break;
+        }
     }
 
 }
