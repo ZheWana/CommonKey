@@ -21,6 +21,15 @@ __attribute__((weak)) void ComKey_SyncValue(comkey_t *key) {
     key->preVal = key->val;
 }
 
+__attribute__((weak)) void ComKey_ComeIntoLongHoldCallback(comkey_t *key) {
+    if (key == &key0)
+        printf("key0: ");
+    if (key == &key1) {
+        printf("key1: ");
+    }
+    printf("has come into long hold\n", key->holdTime);
+}
+
 __attribute__((weak)) void ComKey_LongHoldCallback(comkey_t *key) {
     if (key == &key0)
         printf("key0: ");
