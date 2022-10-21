@@ -8,8 +8,9 @@
 
 comkey_t key0, key1;
 
-__attribute__((weak)) void ComKey_SyncValue(comkey_t *key) {
-    //if your key was pressed,"key->val" should be 1.
+__attribute__((weak)) void ComKey_SyncValue(comkey_t* key)
+{
+    // if your key was pressed,"key->val" should be 1.
     if (key == &key0) {
         key->val = !HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0);
     }
@@ -17,11 +18,12 @@ __attribute__((weak)) void ComKey_SyncValue(comkey_t *key) {
         key->val = !HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_1);
     }
 
-    //IMPORTANT！！！DO NOT MODIFIED!!!
+    // IMPORTANT！！！DO NOT MODIFIED!!!
     key->preVal = key->val;
 }
 
-__attribute__((weak)) void ComKey_ComeIntoLongHoldCallback(comkey_t *key) {
+__attribute__((weak)) void ComKey_ComeIntoLongHoldCallback(comkey_t* key)
+{
     if (key == &key0)
         printf("key0: ");
     if (key == &key1) {
@@ -30,7 +32,8 @@ __attribute__((weak)) void ComKey_ComeIntoLongHoldCallback(comkey_t *key) {
     printf("has come into long hold\n", key->holdTime);
 }
 
-__attribute__((weak)) void ComKey_LongHoldCallback(comkey_t *key) {
+__attribute__((weak)) void ComKey_LongHoldCallback(comkey_t* key)
+{
     if (key == &key0)
         printf("key0: ");
     if (key == &key1) {
@@ -39,7 +42,8 @@ __attribute__((weak)) void ComKey_LongHoldCallback(comkey_t *key) {
     printf("hold %ldms\n", key->holdTime);
 }
 
-__attribute__((weak)) void ComKey_HoldTriggerCallback(comkey_t *key) {
+__attribute__((weak)) void ComKey_HoldTriggerCallback(comkey_t* key)
+{
     if (key == &key0)
         printf("key0: HoldTrigger\n");
     if (key == &key1) {
@@ -47,7 +51,8 @@ __attribute__((weak)) void ComKey_HoldTriggerCallback(comkey_t *key) {
     }
 }
 
-__attribute__((weak)) void ComKey_MultipleClickCallback(comkey_t *key) {
+__attribute__((weak)) void ComKey_MultipleClickCallback(comkey_t* key)
+{
     if (key == &key0)
         printf("key0: ");
     if (key == &key1) {
@@ -56,7 +61,8 @@ __attribute__((weak)) void ComKey_MultipleClickCallback(comkey_t *key) {
     printf("click: %d\n", key->clickCnt);
 }
 
-__attribute__((weak)) void ComKey_KeyReleaseCallback(comkey_t *key) {
+__attribute__((weak)) void ComKey_KeyReleaseCallback(comkey_t* key)
+{
     if (key == &key0) {
         printf("key0: ");
     }
@@ -72,7 +78,8 @@ __attribute__((weak)) void ComKey_KeyReleaseCallback(comkey_t *key) {
     printf(" Release!\n");
 }
 
-__attribute__((weak)) void ComKey_KeyPressCallback(comkey_t *key) {
+__attribute__((weak)) void ComKey_KeyPressCallback(comkey_t* key)
+{
     if (key == &key0) {
         printf("key0: ");
     }
@@ -87,7 +94,8 @@ __attribute__((weak)) void ComKey_KeyPressCallback(comkey_t *key) {
 static pcomkey_t head = NULL, tail = NULL;
 static uint8_t ITPeriod = 1;
 
-void ComKey_Init(comkey_t *key, int pollingPeriod) {
+void ComKey_Init(comkey_t* key, int pollingPeriod)
+{
     ITPeriod = pollingPeriod;
     key->state = Release;
     key->next = NULL;
@@ -101,7 +109,8 @@ void ComKey_Init(comkey_t *key, int pollingPeriod) {
     }
 }
 
-void ComKey_Handler() {
+void ComKey_Handler()
+{
 
     for (pcomkey_t key = head; key != NULL; key = key->next) {
         //键值同步
@@ -126,63 +135,63 @@ void ComKey_Handler() {
 
         //事件生成
         switch (key->state) {
-            case Release:
-                key->clickCnt = 0;
+        case Release:
+            key->clickCnt = 0;
 
-                if (key->val) {
-                    key->state = PrePress;
-                }
-                break;
-            case PrePress:
-
-                if (!key->val) {
-                    key->state = Release;
-                } else if (key->preTimer > COMKEY_ClickThreshold) {
-                    key->state = Prelong;
-                    ComKey_KeyPressCallback(key);
-                }
-                break;
-            case Prelong:
-
-                if (!key->val) {
-                    key->state = MultiClick;
-                    key->clickCnt++;
-                } else if (key->preTimer > COMKEY_HoldThreshold) {
-                    key->state = LongHold;
-                    key->triggerTimer = COMKEY_HoldTriggerThreshold;
-                }
-                break;
-            case LongHold: {
-                if (key->triggerTimer > 0)key->triggerTimer -= ITPeriod;
-                else {
-                    key->triggerTimer = COMKEY_HoldTriggerThreshold;
-                    ComKey_HoldTriggerCallback(key);
-                }
-
-                if (!key->val) {
-                    ComKey_LongHoldCallback(key);
-                    ComKey_KeyReleaseCallback(key);
-                    key->state = Release;
-                }
+            if (key->val) {
+                key->state = PrePress;
             }
-                break;
-            case MultiClick:
+            break;
+        case PrePress:
 
-                if (key->intervalTimer > COMKEY_IntervalVal) {
-                    ComKey_MultipleClickCallback(key);
-                    ComKey_KeyReleaseCallback(key);
-                    key->state = Release;
-                } else if (key->preTimer > COMKEY_ClickThreshold) {
-                    key->state = Prelong;
-                }
-                break;
+            if (!key->val) {
+                key->state = Release;
+            } else if (key->preTimer > COMKEY_ClickThreshold) {
+                key->state = Prelong;
+                ComKey_KeyPressCallback(key);
+            }
+            break;
+        case Prelong:
 
-            default:
+            if (!key->val) {
+                key->state = MultiClick;
+                key->clickCnt++;
+            } else if (key->preTimer > COMKEY_HoldThreshold) {
+                key->state = LongHold;
+                key->triggerTimer = COMKEY_HoldTriggerThreshold;
+                ComKey_ComeIntoLongHoldCallback(key);
+            }
+            break;
+        case LongHold: {
+            if (key->triggerTimer > 0)
+                key->triggerTimer -= ITPeriod;
+            else {
+                key->triggerTimer = COMKEY_HoldTriggerThreshold;
+                ComKey_HoldTriggerCallback(key);
+            }
+
+            if (!key->val) {
+                ComKey_LongHoldCallback(key);
+                ComKey_KeyReleaseCallback(key);
+                key->state = Release;
+            }
+        } break;
+        case MultiClick:
+
+            if (key->intervalTimer > COMKEY_IntervalVal) {
+                ComKey_MultipleClickCallback(key);
+                ComKey_KeyReleaseCallback(key);
+                key->state = Release;
+            } else if (key->preTimer > COMKEY_ClickThreshold) {
+                key->state = Prelong;
+            }
+            break;
+
+        default:
 #ifdef USE_HAL_DRIVER
-                Error_Handler();
-#endif//USE_HAL_DRIVER
-                break;
+            Error_Handler();
+#endif // USE_HAL_DRIVER
+            break;
         }
     }
-
 }
