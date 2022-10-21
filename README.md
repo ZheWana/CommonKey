@@ -24,7 +24,7 @@
 
 * 根据需要重写回调函数：
 
->    `ComKey_ComeIntoLongHoldCallback`：**进入长按回调函数**，参数为**按键句柄**
+>    `ComKey_FirstLongTriggerCallback`：**首次长按触发回调函数**，参数为**按键句柄**
 >
 >    `ComKey_LongHoldCallback`：**长按回调函数**，参数为**按键句柄**
 >
@@ -69,24 +69,23 @@ void ComKey_SyncValue(comkey_t *key) {
 }
 ```
 
-### 进入长按回调函数
+### 首次长按触发回调函数
 
 如果您有多个按键，请通过**您自己定义的按键句柄**来区分您的触发按键；
 
 该回调函数为进入长按状态的信号，此函数被调用意味着您的按键**进入长按状态**。
 
 ```C
-__attribute__((weak)) void ComKey_ComeIntoLongHoldCallback(comkey_t *key) {
+__attribute__((weak)) void ComKey_FirstLongTriggerCallback(comkey_t* key)
+{
     if (key == &key0)
         printf("key0: ");
     if (key == &key1) {
         printf("key1: ");
     }
-    printf("has come into long hold\n", key->holdTime);
+    printf("was triggerred!\n", key->holdTime);
 }
 ```
-
-
 
 ### 长按回调函数
 

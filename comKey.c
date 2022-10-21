@@ -22,14 +22,14 @@ __attribute__((weak)) void ComKey_SyncValue(comkey_t* key)
     key->preVal = key->val;
 }
 
-__attribute__((weak)) void ComKey_ComeIntoLongHoldCallback(comkey_t* key)
+__attribute__((weak)) void ComKey_FirstLongTriggerCallback(comkey_t* key)
 {
     if (key == &key0)
         printf("key0: ");
     if (key == &key1) {
         printf("key1: ");
     }
-    printf("has come into long hold\n", key->holdTime);
+    printf("was triggerred!\n", key->holdTime);
 }
 
 __attribute__((weak)) void ComKey_LongHoldCallback(comkey_t* key)
@@ -159,7 +159,7 @@ void ComKey_Handler()
             } else if (key->preTimer > COMKEY_HoldThreshold) {
                 key->state = LongHold;
                 key->triggerTimer = COMKEY_HoldTriggerThreshold;
-                ComKey_ComeIntoLongHoldCallback(key);
+                ComKey_FirstLongTriggerCallback(key);
             }
             break;
         case LongHold: {
