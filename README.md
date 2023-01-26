@@ -200,6 +200,6 @@ void ComKey_KeyReleaseCallback(comkey_t *key) {
 仅作分享，欢迎提出优化意见以及建议🥰
 
 
-[1]: https://zhewana.cn/usr/uploads/2022/03/2707392082.png
+[1]: https://zhewana.cn/usr/wp-content/2022/03/2707392082.png
 [2]: https://github.com/Zhewana/CommonKey
-[3]: https://zhewana.cn/usr/uploads/2022/03/3781171879.png
+[3]: https://zhewana.cn/wp-content/uploads/2022/03/3781171879.png
